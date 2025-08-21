@@ -37,7 +37,7 @@ birthday-song-generator/
 
 ### **1️⃣ Clone the repository**
 ```bash
-git clone https://github.com/your-username/birthday-song-generator.git
+git clone https://github.com/Mark-218/birthday-song-generator.git
 cd birthday-song-generator
 ```
 
