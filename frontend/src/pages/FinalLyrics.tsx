@@ -3,28 +3,39 @@ import api from '../lib/axios';
 import { useState } from 'react';
 
 export default function FinalLyrics() {
-  const { lyrics } = useApp();
+  const { lyrics, voice } = useApp(); // ✅ voice added from context
   const [playing, setPlaying] = useState(false);
 
+  // ✅ Fallback: Browser Speech API if TTS API fails
   const playWithBrowserSpeech = async () => {
     const utter = new SpeechSynthesisUtterance(lyrics || 'No lyrics');
+    utter.voice = speechSynthesis.getVoices().find(v =>
+      voice?.toLowerCase() === 'female' ? v.name.includes('Female') : v.name.includes('Male')
+    ) || null; // Pick female/male if available
     utter.onend = () => setPlaying(false);
     setPlaying(true);
     speechSynthesis.speak(utter);
   };
 
+  // ✅ Play using backend-generated TTS
   const play = async () => {
     try {
-      const { data } = await api.post('/tts', { text: lyrics, voice: 'default' });
-      if (data && data.url) {
-        const audio = new Audio(data.url);
-        setPlaying(true);
-        audio.onended = () => setPlaying(false);
-        audio.play();
-        return;
-      }
-      await playWithBrowserSpeech();
-    } catch {
+      setPlaying(true);
+
+      // Send text + voice selection to backend
+      const { data } = await api.post(
+        '/tts',
+        { text: lyrics, voice: voice || 'Female' }, // ✅ Send voice dynamically
+        { responseType: 'blob' }
+      );
+
+      // Convert blob to audio URL and play
+      const audioURL = URL.createObjectURL(data);
+      const audio = new Audio(audioURL);
+      audio.onended = () => setPlaying(false);
+      await audio.play();
+    } catch (error) {
+      console.error('Error playing audio:', error);
       await playWithBrowserSpeech();
     }
   };
@@ -63,26 +74,24 @@ export default function FinalLyrics() {
       >
         <pre
           className="whitespace-pre-wrap text-[16px] leading-7 font-medium"
-         style={{ 
-  color: '#330072',  
-  fontFamily: 'Gibson, sans-serif', 
-  fontWeight: 500 
-}}
-
+          style={{
+            color: '#330072',
+            fontFamily: 'Gibson, sans-serif',
+            fontWeight: 500,
+          }}
         >
           {lyrics}
         </pre>
       </div>
 
       {/* Play Button */}
-<button
-  className="mt-6 w-full max-w-md px-12 py-3 bg-[#e9bb72] text-purple-900 font-semibold rounded-xl shadow-lg hover:bg-yellow-300 transition mx-4"
-  onClick={play}
-  disabled={playing}
->
-  {playing ? 'Playing...' : 'Play Song'}
-</button>
-
+      <button
+        className="mt-6 w-full max-w-md px-12 py-3 bg-[#e9bb72] text-purple-900 font-semibold rounded-xl shadow-lg hover:bg-yellow-300 transition mx-4 disabled:opacity-70 disabled:cursor-not-allowed"
+        onClick={play}
+        disabled={playing}
+      >
+        {playing ? 'Playing...' : 'Play Song'}
+      </button>
 
       {/* Custom Scrollbar */}
       <style>{`
