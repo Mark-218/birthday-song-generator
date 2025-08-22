@@ -1,14 +1,33 @@
-import type { Request, Response } from 'express';
+import axios from "axios";
 
-// Mock TTS handler: returns 501 unless provider is set to elevenlabs with keys.
-// Frontend can fall back to browser SpeechSynthesis.
-export async function handleTTS(req: Request, res: Response) {
-  const provider = (process.env.TTS_PROVIDER || 'mock').toLowerCase();
-  if (provider !== 'elevenlabs') {
-    return res.status(501).json({ message: 'TTS provider not configured. Frontend will use browser speech.' });
-  }
+export async function generateAudioFromText(text: string, voiceId: string): Promise<Buffer> {
+    try {
+        const apiKey = process.env.ELEVENLABS_API_KEY;
+        const ttsUrl = `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`;
 
-  // Placeholder for ElevenLabs integration
-  // You can implement an actual fetch to ElevenLabs API here and stream audio/mpeg back.
-  return res.status(501).json({ message: 'ElevenLabs integration not implemented in starter.' });
+        const response = await axios.post(
+            ttsUrl,
+            {
+                text: text,
+                model_id: "eleven_monolingual_v1", // Model
+                voice_settings: {
+                    stability: 0.5,
+                    similarity_boost: 0.75
+                }
+            },
+            {
+                headers: {
+                    "Accept": "audio/mpeg",
+                    "Content-Type": "application/json",
+                    "xi-api-key": apiKey || ""
+                },
+                responseType: "arraybuffer"
+            }
+        );
+
+        return Buffer.from(response.data);
+    } catch (error) {
+        console.error("Error generating TTS audio:", error);
+        throw new Error("TTS generation failed");
+    }
 }

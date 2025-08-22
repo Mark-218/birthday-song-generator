@@ -3,6 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 
+
 import authRoutes from './routes/auth.routes.js';
 import prefRoutes from './routes/preferences.routes.js';
 import aiRoutes from './routes/ai.routes.js';
@@ -21,7 +22,9 @@ app.get('/', (_, res) => res.json({ ok: true, service: 'birthday-song-backend' }
 app.use('/api', authRoutes);
 app.use('/api', prefRoutes);
 app.use('/api', aiRoutes);
-app.use('/api', ttsRoutes);
+app.use('/api/tts', ttsRoutes);
+
+
 
 app.use((_, res) => res.status(404).json({ message: 'Not Found' }));
 

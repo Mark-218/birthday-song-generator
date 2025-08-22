@@ -1,7 +1,9 @@
-import { Router } from 'express';
-import { tts } from '../controllers/tts.controller.js';
+import { Router } from "express";
+import { generateTTS } from "../controllers/tts.controller.js";
+
 const router = Router();
 
-router.post('/tts', tts);
+// ✅ Remove the extra `/tts` here
+router.post("/", generateTTS);
 
 export default router;
