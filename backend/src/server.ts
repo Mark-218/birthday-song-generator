@@ -2,16 +2,13 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
-import { pool } from './db.js'; // MySQL connection
+
 import authRoutes from './routes/auth.routes.js';
 import prefRoutes from './routes/preferences.routes.js';
 import aiRoutes from './routes/ai.routes.js';
 import ttsRoutes from './routes/tts.routes.js';
-import healthRoutes from './routes/health.routes.js';
 
 const app = express();
-
-// Use Railway port if available, fallback to 4000 for local dev
 const PORT = Number(process.env.PORT) || 4000;
 const ORIGIN = process.env.CLIENT_ORIGIN || 'http://localhost:5173';
 
@@ -23,6 +20,8 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   credentials: true,
 }));
+
+// Handle OPTIONS preflight requests
 app.options('*', cors());
 
 // ----------------------
@@ -39,14 +38,10 @@ app.get('/', (_, res) => {
     status: 'ok',
     service: 'birthday-song-backend',
     environment: process.env.NODE_ENV || 'development',
-    port: PORT
+    port: PORT,
+    note: 'Use your public Railway URL, not localhost, when accessing externally.'
   });
 });
-
-// ----------------------
-// Health route
-// ----------------------
-app.use('/health', healthRoutes);
 
 // ----------------------
 // API routes
@@ -62,16 +57,13 @@ app.use('/api/tts', ttsRoutes);
 app.use((_, res) => res.status(404).json({ message: 'Not Found' }));
 
 // ----------------------
-// Start server & check DB connection
+// Start server
 // ----------------------
-(async () => {
-  try {
-    await pool.getConnection();
-    console.log('✅ Database connected successfully');
-
-    app.listen(PORT, () => console.log(`Backend listening on port ${PORT}`));
-  } catch (err) {
-    console.error('❌ Database connection failed:', err);
-    process.exit(1);
+app.listen(PORT, () => {
+  console.log(`✅ Backend listening on port ${PORT}`);
+  if (process.env.RAILWAY_STATIC_URL) {
+    console.log(`🌐 Public URL: https://${process.env.RAILWAY_STATIC_URL}`);
+  } else {
+    console.log(`🌐 Localhost URL: http://localhost:${PORT}`);
   }
-})();
+});
