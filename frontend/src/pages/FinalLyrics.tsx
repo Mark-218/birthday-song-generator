@@ -53,7 +53,7 @@ export default function FinalLyrics() {
       {/* Progress Bar */}
       <div className="mb-6">
         <img
-          src="/assets/images/progress-bar2.png"
+          src="/assets/images/progress-bar4.png"
           alt="Progress"
           className="mx-auto w-60 md:w-80"
         />
