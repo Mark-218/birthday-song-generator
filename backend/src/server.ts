@@ -3,6 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 import { pool } from './db.js'; // MySQL pool connection
+
 import authRoutes from './routes/auth.routes.js';
 import prefRoutes from './routes/preferences.routes.js';
 import aiRoutes from './routes/ai.routes.js';
@@ -14,7 +15,7 @@ const app = express();
 // ----------------------
 // Port & Origin
 // ----------------------
-const PORT = process.env.PORT ? Number(process.env.PORT) : 8080;
+const PORT = process.env.PORT ? Number(process.env.PORT) : 4000;
 const ORIGIN = process.env.CLIENT_ORIGIN || 'http://localhost:5173';
 
 console.log('Environment:', process.env.NODE_ENV || 'development');
@@ -50,7 +51,7 @@ app.get('/', (_, res) => {
 });
 
 // ----------------------
-// Health route
+// Health check route ✅ (important for deployment!)
 // ----------------------
 app.use('/health', healthRoutes);
 
@@ -75,12 +76,11 @@ app.use((_, res) => res.status(404).json({ message: 'Not Found' }));
     await pool.getConnection();
     console.log('✅ Database connected successfully');
 
-    // ✅ Bind to 0.0.0.0 for Railway / cloud hosting
+    // ✅ Bind to 0.0.0.0 (required for Docker/Heroku/Render/Railway)
     app.listen(PORT, '0.0.0.0', () =>
       console.log(`Backend listening on port ${PORT}`)
     );
   } catch (err) {
     console.error('❌ Database connection failed:', err);
-    // Don't crash Railway unnecessarily
   }
 })();
