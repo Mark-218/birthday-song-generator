@@ -2,15 +2,24 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
-
+import { pool } from './db.js'; // your MySQL pool connection
 import authRoutes from './routes/auth.routes.js';
 import prefRoutes from './routes/preferences.routes.js';
 import aiRoutes from './routes/ai.routes.js';
 import ttsRoutes from './routes/tts.routes.js';
+import healthRoutes from './routes/health.routes.js';
 
 const app = express();
-const PORT = Number(process.env.PORT) || 4000;
+
+// ----------------------
+// Port & Origin
+// ----------------------
+const PORT = process.env.PORT ? Number(process.env.PORT) : 4000;
 const ORIGIN = process.env.CLIENT_ORIGIN || 'http://localhost:5173';
+
+console.log('Environment:', process.env.NODE_ENV || 'development');
+console.log('PORT:', PORT);
+console.log('CLIENT_ORIGIN:', ORIGIN);
 
 // ----------------------
 // CORS setup
@@ -20,8 +29,6 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   credentials: true,
 }));
-
-// Handle OPTIONS preflight requests
 app.options('*', cors());
 
 // ----------------------
@@ -38,10 +45,14 @@ app.get('/', (_, res) => {
     status: 'ok',
     service: 'birthday-song-backend',
     environment: process.env.NODE_ENV || 'development',
-    port: PORT,
-    note: 'Use your public Railway URL, not localhost, when accessing externally.'
+    port: PORT
   });
 });
+
+// ----------------------
+// Health route
+// ----------------------
+app.use('/health', healthRoutes);
 
 // ----------------------
 // API routes
@@ -57,13 +68,16 @@ app.use('/api/tts', ttsRoutes);
 app.use((_, res) => res.status(404).json({ message: 'Not Found' }));
 
 // ----------------------
-// Start server
+// Start server & check DB connection
 // ----------------------
-app.listen(PORT, () => {
-  console.log(`✅ Backend listening on port ${PORT}`);
-  if (process.env.RAILWAY_STATIC_URL) {
-    console.log(`🌐 Public URL: https://${process.env.RAILWAY_STATIC_URL}`);
-  } else {
-    console.log(`🌐 Localhost URL: http://localhost:${PORT}`);
+(async () => {
+  try {
+    await pool.getConnection();
+    console.log('✅ Database connected successfully');
+
+    app.listen(PORT, () => console.log(`Backend listening on port ${PORT}`));
+  } catch (err) {
+    console.error('❌ Database connection failed:', err);
+    // Don't crash Railway unnecessarily; keep container alive
   }
-});
+})();
