@@ -1,69 +1,69 @@
-import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
-import { pool } from './db.js'; // MySQL connection
+import { createPool } from 'mysql2/promise';
+
 import authRoutes from './routes/auth.routes.js';
 import prefRoutes from './routes/preferences.routes.js';
 import aiRoutes from './routes/ai.routes.js';
 import ttsRoutes from './routes/tts.routes.js';
-import healthRoutes from './routes/health.routes.js';
-
-const app = express();
-
-// Use Railway port if available, fallback to 4000 for local dev
-const PORT = Number(process.env.PORT) || 4000;
-const ORIGIN = process.env.CLIENT_ORIGIN || 'http://localhost:5173';
 
 // ----------------------
-// CORS setup
+// Hardcoded "env" values
 // ----------------------
-app.use(cors({
-  origin: ORIGIN,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  credentials: true,
-}));
-app.options('*', cors());
+const PORT = 4000; // or Railway's default
+const ORIGIN = 'http://localhost:5173'; // frontend URL
+
+const DB_HOST = 'shinkansen.proxy.rlwy.net';
+const DB_PORT = 16151;
+const DB_USER = 'root';
+const DB_PASSWORD = 'unlpVVVOctpkRibRJLdLUmdebbepMTJr';
+const DB_NAME = 'railway';
+
+// Optional for testing AI/TTS
+const OPENAI_API_KEY = 'sk-your-key';
+const TTS_PROVIDER = 'elevenlabs';
+const ELEVENLABS_API_KEY = 'sk-your-key';
+const ELEVENLABS_VOICE_ID_DEFAULT = 'jYMoRsZQbrEVBccBz1fa';
+const ELEVENLABS_VOICE_ID_MALE = 'jYMoRsZQbrEVBccBz1fa';
+const ELEVENLABS_VOICE_ID_FEMALE = 'WzsP0bfiCpSDfNgLrUuN';
 
 // ----------------------
-// Middleware
+// MySQL Pool
 // ----------------------
-app.use(express.json({ limit: '1mb' }));
-app.use(morgan('dev'));
-
-// ----------------------
-// Root route
-// ----------------------
-app.get('/', (_, res) => {
-  res.json({
-    status: 'ok',
-    service: 'birthday-song-backend',
-    environment: process.env.NODE_ENV || 'development',
-    port: PORT
-  });
+export const pool = createPool({
+  host: DB_HOST,
+  port: DB_PORT,
+  user: DB_USER,
+  password: DB_PASSWORD,
+  database: DB_NAME,
+  connectionLimit: 10
 });
 
 // ----------------------
-// Health route
+// Express App
 // ----------------------
-app.use('/health', healthRoutes);
+const app = express();
 
-// ----------------------
+app.use(cors({ origin: ORIGIN, methods: ['GET','POST','PUT','DELETE','OPTIONS'], credentials: true }));
+app.options('*', cors());
+
+app.use(express.json({ limit: '1mb' }));
+app.use(morgan('dev'));
+
+// Health check
+app.get('/health', (_, res) => res.json({ status: 'ok', service: 'birthday-song-backend', port: PORT }));
+
 // API routes
-// ----------------------
 app.use('/api', authRoutes);
 app.use('/api', prefRoutes);
 app.use('/api', aiRoutes);
 app.use('/api/tts', ttsRoutes);
 
-// ----------------------
 // 404 handler
-// ----------------------
 app.use((_, res) => res.status(404).json({ message: 'Not Found' }));
 
-// ----------------------
-// Start server & check DB connection
-// ----------------------
+// Start server
 (async () => {
   try {
     await pool.getConnection();
