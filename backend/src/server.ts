@@ -2,7 +2,7 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
-import { pool } from './db.js'; // your MySQL pool connection
+import { pool } from './db.js'; // MySQL pool connection
 import authRoutes from './routes/auth.routes.js';
 import prefRoutes from './routes/preferences.routes.js';
 import aiRoutes from './routes/ai.routes.js';
@@ -75,9 +75,12 @@ app.use((_, res) => res.status(404).json({ message: 'Not Found' }));
     await pool.getConnection();
     console.log('✅ Database connected successfully');
 
-    app.listen(PORT, () => console.log(`Backend listening on port ${PORT}`));
+    // ✅ Bind to 0.0.0.0 for Railway / cloud hosting
+    app.listen(PORT, '0.0.0.0', () =>
+      console.log(`Backend listening on port ${PORT}`)
+    );
   } catch (err) {
     console.error('❌ Database connection failed:', err);
-    // Don't crash Railway unnecessarily; keep container alive
+    // Don't crash Railway unnecessarily
   }
 })();
