@@ -2,7 +2,7 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
-import { pool } from './db.js'; // your MySQL pool connection
+
 import authRoutes from './routes/auth.routes.js';
 import prefRoutes from './routes/preferences.routes.js';
 import aiRoutes from './routes/ai.routes.js';
@@ -30,8 +30,8 @@ app.options('*', cors({
 app.use(express.json({ limit: '1mb' }));
 app.use(morgan('dev'));
 
-// ✅ Health check route
-app.get('/health', (_, res) => res.json({ status: 'ok', service: 'birthday-song-backend' }));
+// ✅ Test endpoint
+app.get('/', (_, res) => res.json({ ok: true, service: 'birthday-song-backend' }));
 
 // ✅ API routes
 app.use('/api', authRoutes);
@@ -42,16 +42,5 @@ app.use('/api/tts', ttsRoutes);
 // ✅ 404 handler
 app.use((_, res) => res.status(404).json({ message: 'Not Found' }));
 
-// ✅ Database connection check before starting server
-(async () => {
-  try {
-    await pool.getConnection();
-    console.log('✅ Database connected successfully');
-
-    // ✅ Start server
-    app.listen(PORT, () => console.log(`Backend listening on port ${PORT}`));
-  } catch (err) {
-    console.error('❌ Database connection failed:', err);
-    process.exit(1); // exit if DB fails
-  }
-})();
+// ✅ Start server
+app.listen(PORT, () => console.log(`Backend listening on http://localhost:${PORT}`));
