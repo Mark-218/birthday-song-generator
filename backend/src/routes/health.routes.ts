@@ -7,7 +7,7 @@ router.get('/', (_, res) => {
     status: 'ok',
     service: 'birthday-song-backend',
     environment: process.env.NODE_ENV || 'development',
-    port: process.env.PORT || 4000
+    port: process.env.PORT || 8080
   });
 });
 

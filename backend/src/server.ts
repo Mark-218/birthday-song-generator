@@ -14,7 +14,7 @@ const app = express();
 // ----------------------
 // Port & Origin
 // ----------------------
-const PORT = process.env.PORT ? Number(process.env.PORT) : 4000;
+const PORT = process.env.PORT ? Number(process.env.PORT) : 8080;
 const ORIGIN = process.env.CLIENT_ORIGIN || 'http://localhost:5173';
 
 console.log('Environment:', process.env.NODE_ENV || 'development');
