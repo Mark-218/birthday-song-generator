@@ -12,15 +12,20 @@ export async function generateTTS(req: Request, res: Response) {
             return res.status(400).json({ error: "Text is required" });
         }
 
-        // Select voice ID based on gender or voice type
-        let voiceId = process.env.ELEVENLABS_VOICE_ID_DEFAULT || "";
+ // Select voice ID based on gender or default to male
+        let voiceId = process.env.ELEVENLABS_VOICE_ID_MALE || process.env.ELEVENLABS_VOICE_ID_DEFAULT;
 
-        if (voice && voice.toLowerCase() === "male") {
-            voiceId = process.env.ELEVENLABS_VOICE_ID_MALE || voiceId;
-        } else if (voice && voice.toLowerCase() === "female") {
-            voiceId = process.env.ELEVENLABS_VOICE_ID_FEMALE || voiceId;
+        if (voice) {
+            const v = voice.toLowerCase();
+            if (v === "female") {
+                voiceId = process.env.ELEVENLABS_VOICE_ID_FEMALE || voiceId;
+            } else if (v === "male") {
+                voiceId = process.env.ELEVENLABS_VOICE_ID_MALE || voiceId;
+            }
+            // any other value keeps default male
         }
 
+        
         console.log("Voice param received:", voice);
         console.log("Voice ID being used:", voiceId);
 
