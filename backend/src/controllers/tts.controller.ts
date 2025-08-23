@@ -1,19 +1,20 @@
 import { Request, Response } from "express";
-import { generateAudioFromText } from "../services/tts.service.js";
+import { generateAudioFromText } from "../services/tts.service";
 
 export async function generateTTS(req: Request, res: Response) {
     try {
         const { text, voice } = req.body;
 
-        console.log("Received TTS Request:", { text, voice }); // Debug incoming request
+        console.log("Received TTS Request:", { text, voice });
 
         if (!text) {
             console.warn("TTS Error: Missing text in request body");
             return res.status(400).json({ error: "Text is required" });
         }
 
- // Select voice ID based on gender or default to male
-        let voiceId = process.env.ELEVENLABS_VOICE_ID_MALE || process.env.ELEVENLABS_VOICE_ID_DEFAULT;
+        // --- Voice Selection ---
+        // Default to male
+        let voiceId = process.env.ELEVENLABS_VOICE_ID_MALE || process.env.ELEVENLABS_VOICE_ID_DEFAULT || "";
 
         if (voice) {
             const v = voice.toLowerCase();
@@ -25,14 +26,11 @@ export async function generateTTS(req: Request, res: Response) {
             // any other value keeps default male
         }
 
-        
         console.log("Voice param received:", voice);
-        console.log("Voice ID being used:", voiceId);
+        console.log("Using Voice ID:", voiceId);
 
-        // Generate audio
-        console.log("Generating audio from text...");
+        // --- Generate audio ---
         const audioBuffer = await generateAudioFromText(text, voiceId);
-        console.log("Audio generated successfully. Size:", audioBuffer.length, "bytes");
 
         res.set({
             "Content-Type": "audio/mpeg",
@@ -40,8 +38,10 @@ export async function generateTTS(req: Request, res: Response) {
         });
 
         res.send(audioBuffer);
+        console.log("Audio sent successfully. Size:", audioBuffer.length, "bytes");
     } catch (error) {
         console.error("TTS Error:", error);
+
         res.status(500).json({ error: "Failed to generate TTS audio" });
     }
 }
